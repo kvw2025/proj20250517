@@ -342,69 +342,65 @@ const TOPICS=[
   {v:'dev',label:'Development'},
   {v:'trade',label:'Trade / Globalisation'}
 ];
+
 let currentUtterance = null;
-let voiceReady = false;
+let speechToken = 0;
 
-function speakText(text, onEnd) {
-  if (!('speechSynthesis' in window)) {
-    console.warn('Speech synthesis not supported.');
-    if (onEnd) onEnd();
-    return;
-  }
-
-  window.speechSynthesis.cancel();
-
-  const u = new SpeechSynthesisUtterance(text);
-  currentUtterance = u;
-
-  u.lang = 'en-US';
-  u.pitch = 1;
-  u.volume = 1;
-
-  const msPerWord = parseInt($('ssel').value);
-
-  if (msPerWord >= 2500) {
-    u.rate = 0.7;
-  } else if (msPerWord >= 2000) {
-    u.rate = 0.78;
-  } else if (msPerWord >= 1500) {
-    u.rate = 0.9;
-  } else {
-    u.rate = 1.05;
-  }
-
-  const voices = window.speechSynthesis.getVoices();
-  const preferred =
-    voices.find(v => v.lang === 'en-US') ||
-    voices.find(v => v.lang && v.lang.startsWith('en')) ||
-    voices[0];
-
-  if (preferred) {
-    u.voice = preferred;
-  }
-
-  u.onstart = () => {
-    console.log('Speech started:', text);
-  };
-
-  u.onend = () => {
-    console.log('Speech ended');
-    currentUtterance = null;
-    if (onEnd) onEnd();
-  };
-
-  u.onerror = e => {
-    console.warn('Speech error:', e.error, e);
-    currentUtterance = null;
-
-    if (e.error !== 'canceled' && onEnd) {
-      onEnd();
+function speakWord(word) {
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window)) {
+      resolve();
+      return;
     }
-  };
 
-  window.speechSynthesis.speak(u);
-  window.speechSynthesis.resume();
+    const u = new SpeechSynthesisUtterance(word);
+    currentUtterance = u;
+
+    u.lang = 'en-US';
+    u.volume = 1;
+    u.pitch = 1;
+    u.rate = 0.8;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferred =
+      voices.find(v => v.lang === 'en-US') ||
+      voices.find(v => v.lang && v.lang.startsWith('en')) ||
+      voices[0];
+
+    if (preferred) {
+      u.voice = preferred;
+    }
+
+    u.onend = () => {
+      currentUtterance = null;
+      resolve();
+    };
+
+    u.onerror = () => {
+      currentUtterance = null;
+      resolve();
+    };
+
+    window.speechSynthesis.speak(u);
+    window.speechSynthesis.resume();
+  });
 }
+
+async function speakWordsAtWritingSpeed(words, msPerWord, token) {
+  for (let i = 0; i < words.length; i++) {
+    if (token !== speechToken || paused) return;
+
+    await speakWord(words[i]);
+
+    if (token !== speechToken || paused) return;
+
+    await new Promise(resolve => {
+      setTimeout(resolve, msPerWord);
+    });
+  }
+}
+
+  
 const LN={
 macro:`Fiscal policy: use of taxation and government spending to manage AD to achieve macroeconomic aims.
 Monetary policy: use of interest rates and money supply by central bank to manage AD.
@@ -665,29 +661,14 @@ const rt = words.length * msPerWord;
 
 animWords(words, rt);
 
-let advanced = false;
+speechToken++;
+const myToken = speechToken;
 
-speakText(item.text, () => {
-  if (advanced) return;
-  advanced = true;
-
-  clearTimeout(dictTm);
-
-  if (!paused) {
+speakWordsAtWritingSpeed(words, msPerWord, myToken).then(() => {
+  if (!paused && myToken === speechToken) {
     play(i + 1);
   }
 });
-
-dictTm = setTimeout(() => {
-  if (advanced) return;
-  advanced = true;
-
-  window.speechSynthesis.cancel();
-
-  if (!paused) {
-    play(i + 1);
-  }
-}, rt + 500);
 }
 function animWords(words,total){
   const el=$('senttext');
