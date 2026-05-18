@@ -224,18 +224,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div>
           <label class="lbl">Speed</label>
           <select id="ssel">
-  <option value="2500">Very slow · 2.5s/word</option>
-  <option value="2000" selected>Writing speed · 2s/word</option>
-  <option value="1500">Fast writing · 1.5s/word</option>
-  <option value="1000">Review speed · 1s/word</option>
-</select>
+            <option value="2400">Slower</option>
+            <option value="2000" selected>Normal</option>
+            <option value="1600">Faster</option>
+          </select>
         </div>
-        <button class="btn btn-s" id="testVoiceBtn" style="width:100%;margin-top:10px">
-  Test voice
-</button>
-<script>$('testVoiceBtn').addEventListener('click', () => {
-  speakText('Voice test. This is the A two economics dictation app.');
-});</script>
       </div>
 
       <div class="errbox" id="errbox"></div>
@@ -349,107 +342,55 @@ const TOPICS=[
   {v:'trade',label:'Trade / Globalisation'}
 ];
 let currentUtterance = null;
-let availableVoices = [];
-let voicesLoaded = false;
-
-function loadVoices() {
-  return new Promise(resolve => {
-    const voices = window.speechSynthesis.getVoices();
-
-    if (voices && voices.length > 0) {
-      availableVoices = voices;
-      voicesLoaded = true;
-      resolve(voices);
-      return;
-    }
-
-    window.speechSynthesis.onvoiceschanged = () => {
-      const newVoices = window.speechSynthesis.getVoices();
-      availableVoices = newVoices;
-      voicesLoaded = true;
-      resolve(newVoices);
-    };
-
-    setTimeout(() => {
-      const fallbackVoices = window.speechSynthesis.getVoices();
-      availableVoices = fallbackVoices;
-      voicesLoaded = true;
-      resolve(fallbackVoices);
-    }, 1000);
-  });
-}
-
-async function speakText(text) {
+let voiceReady = false;
+function speakText(text, onEnd) {
   if (!('speechSynthesis' in window)) {
-    console.warn('Speech synthesis not supported.');
+    console.warn('Speech synthesis not supported in this browser.');
+    if (onEnd) onEnd();
     return;
   }
 
   window.speechSynthesis.cancel();
 
-  if (!voicesLoaded) {
-    await loadVoices();
+  const u = new SpeechSynthesisUtterance(text);
+
+  u.lang = 'en-GB';
+
+  const speedValue = parseInt($('ssel').value);
+
+  if (speedValue === 2400) {
+    u.rate = 0.65;
+  } else if (speedValue === 2000) {
+    u.rate = 0.78;
+  } else if (speedValue === 1600) {
+    u.rate = 0.92;
+  } else {
+    u.rate = 0.75;
   }
 
-  const u = new SpeechSynthesisUtterance(text);
-  currentUtterance = u;
-
-  u.lang = 'en-US';
   u.pitch = 1;
   u.volume = 1;
 
-  const msPerWord = parseInt($('ssel').value);
-
-  if (msPerWord >= 2500) {
-    u.rate = 0.45;
-  } else if (msPerWord >= 2000) {
-    u.rate = 0.55;
-  } else if (msPerWord >= 1500) {
-    u.rate = 0.7;
-  } else {
-    u.rate = 0.9;
-  }
-
+  const voices = window.speechSynthesis.getVoices();
   const preferred =
-    availableVoices.find(v => v.lang === 'en-US' && /natural|online|aria|jenny|guy|samantha/i.test(v.name)) ||
-    availableVoices.find(v => v.lang === 'en-US') ||
-    availableVoices.find(v => v.lang && v.lang.startsWith('en')) ||
-    availableVoices[0];
+    voices.find(v => v.lang === 'en-GB' && /female|samantha|serena|daniel|google/i.test(v.name)) ||
+    voices.find(v => v.lang.startsWith('en')) ||
+    voices[0];
 
   if (preferred) {
     u.voice = preferred;
-    console.log('Using voice:', preferred.name, preferred.lang);
-  } else {
-    console.log('No specific voice found. Using browser default.');
   }
 
-  u.onstart = () => {
-    console.log('Speech started:', text);
-  };
-
   u.onend = () => {
-    console.log('Speech ended');
-    currentUtterance = null;
+    if (onEnd) onEnd();
   };
 
-  u.onerror = e => {
-    console.warn('Speech error:', e.error, e);
-    currentUtterance = null;
+  u.onerror = err => {
+    console.warn('Speech error:', err);
+    if (onEnd) onEnd();
   };
 
   window.speechSynthesis.speak(u);
-
-  // Chrome/Edge sometimes need this after speak().
-  window.speechSynthesis.resume();
-
-  setTimeout(() => {
-    console.log({
-      speaking: window.speechSynthesis.speaking,
-      pending: window.speechSynthesis.pending,
-      paused: window.speechSynthesis.paused,
-      currentText: text
-    });
-  }, 300);
 }
 const LN={
 macro:`Fiscal policy: use of taxation and government spending to manage AD to achieve macroeconomic aims.
@@ -676,48 +617,26 @@ function startTimer(){
 }
 
 function play(i){
-  if(i >= flat.length){
-    finish();
-    return;
-  }
-
-  idx = i;
-  const item = flat[i];
-  updateUI(item, i);
-
-  if(item.type === 'diag'){
-    $('diagbanner').textContent = '✏ Draw: ' + item.text;
+  if(i>=flat.length){finish();return;}
+  idx=i;const item=flat[i];updateUI(item,i);
+  if(item.type==='diag'){
+    $('diagbanner').textContent='✏ Draw: '+item.text;
     $('diagbanner').classList.add('on');
-    $('senttext').style.opacity = '.2';
-    $('senttext').textContent = '[ drawing time — ~12 seconds ]';
-
-    dictTm = setTimeout(() => {
-      if(!paused){
-        $('diagbanner').classList.remove('on');
-        $('senttext').style.opacity = '1';
-        play(i + 1);
-      }
-    }, 12000);
-
+    $('senttext').style.opacity='.2';
+    $('senttext').textContent='[ drawing time — ~12 seconds ]';
+    dictTm=setTimeout(()=>{if(!paused){$('diagbanner').classList.remove('on');$('senttext').style.opacity='1';play(i+1);}},12000);
     return;
   }
-
   $('diagbanner').classList.remove('on');
-  $('senttext').style.opacity = '1';
+  $('senttext').style.opacity='1';
+const words = item.text.split(/\s+/);
+const rt = words.length * wSpeed;
 
-  const words = item.text.split(/\s+/);
-  const msPerWord = parseInt($('ssel').value);
-  const rt = words.length * msPerWord;
+animWords(words, rt);
 
-  animWords(words, rt);
-  speakText(item.text);
-
-  dictTm = setTimeout(() => {
-    if(!paused){
-      window.speechSynthesis.cancel();
-      play(i + 1);
-    }
-  }, rt + 500);
+speakText(item.text, () => {
+  if (!paused) play(i + 1);
+});
 }
 function animWords(words,total){
   const el=$('senttext');
@@ -749,38 +668,24 @@ function updateUI(item,i){
 }
 
 function togglePause(){
-  paused = !paused;
-  const btn = $('ppbtn');
-  const ov = $('pauselay');
-
-  if(paused){
-    clearTimeout(dictTm);
-    clearTimeout(wordTm);
-    window.speechSynthesis.pause();
-
-    btn.innerHTML = '&#9654;';
-    ov.classList.add('on');
-  }else{
-    btn.innerHTML = '&#9646;&#9646;';
-    ov.classList.remove('on');
-
-    window.speechSynthesis.cancel();
-    play(idx);
-  }
-}
-function nextSent(){
+  paused=!paused;
+  const btn=$('ppbtn'),ov=$('pauselay');if (paused) {
   clearTimeout(dictTm);
   clearTimeout(wordTm);
+  window.speechSynthesis.pause();
+  btn.innerHTML = '&#9654;';
+  ov.classList.add('on');
+} else {
+  btn.innerHTML = '&#9646;&#9646;';
+  ov.classList.remove('on');
+  window.speechSynthesis.resume();
+}
+}
+function nextSent(){
   window.speechSynthesis.cancel();
-
-  $('diagbanner').classList.remove('on');
-
-  if(!paused) play(idx + 1);
-  else{
-    idx = Math.min(idx + 1, flat.length - 1);
-    updateUI(flat[idx], idx);
-    $('senttext').textContent = flat[idx].text;
-  }
+  clearTimeout(dictTm);clearTimeout(wordTm);$('diagbanner').classList.remove('on');
+  if(!paused)play(idx+1);
+  else{idx=Math.min(idx+1,flat.length-1);updateUI(flat[idx],idx);$('senttext').textContent=flat[idx].text;}
 }
 function unlockSpeech() {
   if (!('speechSynthesis' in window)) return;
@@ -788,13 +693,12 @@ function unlockSpeech() {
   const u = new SpeechSynthesisUtterance(' ');
   u.volume = 0;
   window.speechSynthesis.speak(u);
+  window.speechSynthesis.cancel();
 }
 
 function prevSent(){
-  clearTimeout(dictTm);
-  clearTimeout(wordTm);
   window.speechSynthesis.cancel();
-  $('diagbanner').classList.remove('on');
+  clearTimeout(dictTm);clearTimeout(wordTm);$('diagbanner').classList.remove('on');
   const t=Math.max(0,idx-1);
   if(!paused)play(t);
   else{idx=t;updateUI(flat[idx],idx);$('senttext').textContent=flat[idx].text;}
@@ -802,6 +706,7 @@ function prevSent(){
 function jumpPara(pi){
   const t=flat.findIndex(s=>s.pi===pi);if(t<0)return;
   clearTimeout(dictTm);clearTimeout(wordTm);$('diagbanner').classList.remove('on');
+  window.speechSynthesis.cancel();
   if(!paused)play(t);
   else{idx=t;updateUI(flat[idx],idx);$('senttext').textContent=flat[idx].text;}
 }
@@ -841,7 +746,8 @@ function showReview(){
 $('genbtn').addEventListener('click',generate);
 $('redoBtn').addEventListener('click',()=>go('s0'));
 $('startBtn').addEventListener('click', () => {
-  startDict();
+  unlockSpeech();
+  doCountdown();
 });
 $('prevbtn').addEventListener('click',prevSent);
 $('ppbtn').addEventListener('click',togglePause);
