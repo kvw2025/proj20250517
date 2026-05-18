@@ -345,13 +345,47 @@ const TOPICS=[
 
 let currentUtterance = null;
 let speechToken = 0;
-
-function speakWord(word) {
+let speechWaitTm = null;
+let isDictating = false;
+function waitMs(ms, token) {
   return new Promise(resolve => {
-    if (!('speechSynthesis' in window)) {
-      resolve();
+    speechWaitTm = setTimeout(() => {
+      speechWaitTm = null;
+      resolve(token === speechToken && isDictating && !paused);
+    }, ms);
+  });
+}
+function stopAllSpeechAndTimers() {
+  isDictating = false;
+  speechToken++;
+
+  clearTimeout(dictTm);
+  clearTimeout(wordTm);
+  clearTimeout(speechWaitTm);
+
+  dictTm = null;
+  wordTm = null;
+  speechWaitTm = null;
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+
+  currentUtterance = null;
+}
+function speakWord(word, token) {
+  return new Promise(resolve => {
+    if (!isDictating || paused || token !== speechToken) {
+      resolve(false);
       return;
     }
+
+    if (!('speechSynthesis' in window)) {
+      resolve(false);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
 
     const u = new SpeechSynthesisUtterance(word);
     currentUtterance = u;
@@ -359,7 +393,7 @@ function speakWord(word) {
     u.lang = 'en-US';
     u.volume = 1;
     u.pitch = 1;
-    u.rate = 0.8;
+    u.rate = 0.85;
 
     const voices = window.speechSynthesis.getVoices();
     const preferred =
@@ -373,12 +407,12 @@ function speakWord(word) {
 
     u.onend = () => {
       currentUtterance = null;
-      resolve();
+      resolve(token === speechToken && isDictating && !paused);
     };
 
     u.onerror = () => {
       currentUtterance = null;
-      resolve();
+      resolve(token === speechToken && isDictating && !paused);
     };
 
     window.speechSynthesis.speak(u);
@@ -388,16 +422,16 @@ function speakWord(word) {
 
 async function speakWordsAtWritingSpeed(words, msPerWord, token) {
   for (let i = 0; i < words.length; i++) {
-    if (token !== speechToken || paused) return;
+    if (!isDictating || paused || token !== speechToken) return false;
 
-    await speakWord(words[i]);
+    const spoken = await speakWord(words[i], token);
+    if (!spoken || !isDictating || paused || token !== speechToken) return false;
 
-    if (token !== speechToken || paused) return;
-
-    await new Promise(resolve => {
-      setTimeout(resolve, msPerWord);
-    });
+    const waited = await waitMs(msPerWord, token);
+    if (!waited || !isDictating || paused || token !== speechToken) return false;
   }
+
+  return token === speechToken && isDictating && !paused;
 }
 
   
@@ -606,6 +640,9 @@ function doCountdown(){
 }
 
 function startDict(){
+  stopAllSpeechAndTimers();
+isDictating = true;
+paused = false;
   idx=0;paused=false;sessStart=Date.now();
   $('dtitle').textContent=essay.title||'Essay';
   const tabs=$('ptabs');tabs.innerHTML='';
@@ -664,8 +701,8 @@ animWords(words, rt);
 speechToken++;
 const myToken = speechToken;
 
-speakWordsAtWritingSpeed(words, msPerWord, myToken).then(() => {
-  if (!paused && myToken === speechToken) {
+speakWordsAtWritingSpeed(words, msPerWord, myToken).then(done => {
+  if (done && isDictating && !paused && myToken === speechToken) {
     play(i + 1);
   }
 });
@@ -705,29 +742,28 @@ function togglePause(){
   const btn = $('ppbtn');
   const ov = $('pauselay');
 
-  if(paused){
-    clearTimeout(dictTm);
-    clearTimeout(wordTm);
-    window.speechSynthesis.pause();
+  stopAllSpeechAndTimers();
 
+  if(paused){
     btn.innerHTML = '&#9654;';
     ov.classList.add('on');
   }else{
+    isDictating = true;
     btn.innerHTML = '&#9646;&#9646;';
     ov.classList.remove('on');
-
-    window.speechSynthesis.resume();
+    play(idx);
   }
 }
+
 function nextSent(){
-  clearTimeout(dictTm);
-  clearTimeout(wordTm);
-  window.speechSynthesis.cancel();
+  stopAllSpeechAndTimers();
 
   $('diagbanner').classList.remove('on');
 
-  if(!paused) play(idx + 1);
-  else{
+  if(!paused){
+    isDictating = true;
+    play(idx + 1);
+  }else{
     idx = Math.min(idx + 1, flat.length - 1);
     updateUI(flat[idx], idx);
     $('senttext').textContent = flat[idx].text;
@@ -761,10 +797,15 @@ function jumpPara(pi){
 function endSess(){if(!confirm('End this session?'))return;finish();}
 
 function finish(){
+  stopAllSpeechAndTimers();
+
+  clearInterval(timerInt);
+
+  const sec = Math.floor((Date.now() - sessStart) / 1000);
+
+  const m = Math.floor(sec / 60), s = sec % 60;
   window.speechSynthesis.cancel();
   clearTimeout(dictTm);clearTimeout(wordTm);clearInterval(timerInt);
-  const sec=Math.floor((Date.now()-sessStart)/1000);
-  const m=Math.floor(sec/60),s=sec%60;
   const words=flat.filter(f=>f.type==='sent').reduce((a,f)=>a+f.text.split(/\s+/).length,0);
   const sents=flat.filter(f=>f.type==='sent').length;
   $('dstats').innerHTML=[
