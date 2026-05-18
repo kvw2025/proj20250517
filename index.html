@@ -224,10 +224,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div>
           <label class="lbl">Speed</label>
           <select id="ssel">
-            <option value="2400">Slower</option>
-            <option value="2000" selected>Normal</option>
-            <option value="1600">Faster</option>
-          </select>
+  <option value="2500">Very slow · 2.5s/word</option>
+  <option value="2000" selected>Writing speed · 2s/word</option>
+  <option value="1500">Fast writing · 1.5s/word</option>
+  <option value="1000">Review speed · 1s/word</option>
+</select>
         </div>
       </div>
 
@@ -617,26 +618,48 @@ function startTimer(){
 }
 
 function play(i){
-  if(i>=flat.length){finish();return;}
-  idx=i;const item=flat[i];updateUI(item,i);
-  if(item.type==='diag'){
-    $('diagbanner').textContent='✏ Draw: '+item.text;
-    $('diagbanner').classList.add('on');
-    $('senttext').style.opacity='.2';
-    $('senttext').textContent='[ drawing time — ~12 seconds ]';
-    dictTm=setTimeout(()=>{if(!paused){$('diagbanner').classList.remove('on');$('senttext').style.opacity='1';play(i+1);}},12000);
+  if(i >= flat.length){
+    finish();
     return;
   }
+
+  idx = i;
+  const item = flat[i];
+  updateUI(item, i);
+
+  if(item.type === 'diag'){
+    $('diagbanner').textContent = '✏ Draw: ' + item.text;
+    $('diagbanner').classList.add('on');
+    $('senttext').style.opacity = '.2';
+    $('senttext').textContent = '[ drawing time — ~12 seconds ]';
+
+    dictTm = setTimeout(() => {
+      if(!paused){
+        $('diagbanner').classList.remove('on');
+        $('senttext').style.opacity = '1';
+        play(i + 1);
+      }
+    }, 12000);
+
+    return;
+  }
+
   $('diagbanner').classList.remove('on');
-  $('senttext').style.opacity='1';
-const words = item.text.split(/\s+/);
-const rt = words.length * wSpeed;
+  $('senttext').style.opacity = '1';
 
-animWords(words, rt);
+  const words = item.text.split(/\s+/);
+  const msPerWord = parseInt($('ssel').value);
+  const rt = words.length * msPerWord;
 
-speakText(item.text, () => {
-  if (!paused) play(i + 1);
-});
+  animWords(words, rt);
+  speakText(item.text);
+
+  dictTm = setTimeout(() => {
+    if(!paused){
+      window.speechSynthesis.cancel();
+      play(i + 1);
+    }
+  }, rt + 500);
 }
 function animWords(words,total){
   const el=$('senttext');
@@ -668,24 +691,38 @@ function updateUI(item,i){
 }
 
 function togglePause(){
-  paused=!paused;
-  const btn=$('ppbtn'),ov=$('pauselay');if (paused) {
-  clearTimeout(dictTm);
-  clearTimeout(wordTm);
-  window.speechSynthesis.pause();
-  btn.innerHTML = '&#9654;';
-  ov.classList.add('on');
-} else {
-  btn.innerHTML = '&#9646;&#9646;';
-  ov.classList.remove('on');
-  window.speechSynthesis.resume();
-}
+  paused = !paused;
+  const btn = $('ppbtn');
+  const ov = $('pauselay');
+
+  if(paused){
+    clearTimeout(dictTm);
+    clearTimeout(wordTm);
+    window.speechSynthesis.pause();
+
+    btn.innerHTML = '&#9654;';
+    ov.classList.add('on');
+  }else{
+    btn.innerHTML = '&#9646;&#9646;';
+    ov.classList.remove('on');
+
+    window.speechSynthesis.cancel();
+    play(idx);
+  }
 }
 function nextSent(){
+  clearTimeout(dictTm);
+  clearTimeout(wordTm);
   window.speechSynthesis.cancel();
-  clearTimeout(dictTm);clearTimeout(wordTm);$('diagbanner').classList.remove('on');
-  if(!paused)play(idx+1);
-  else{idx=Math.min(idx+1,flat.length-1);updateUI(flat[idx],idx);$('senttext').textContent=flat[idx].text;}
+
+  $('diagbanner').classList.remove('on');
+
+  if(!paused) play(idx + 1);
+  else{
+    idx = Math.min(idx + 1, flat.length - 1);
+    updateUI(flat[idx], idx);
+    $('senttext').textContent = flat[idx].text;
+  }
 }
 function unlockSpeech() {
   if (!('speechSynthesis' in window)) return;
@@ -697,8 +734,10 @@ function unlockSpeech() {
 }
 
 function prevSent(){
+  clearTimeout(dictTm);
+  clearTimeout(wordTm);
   window.speechSynthesis.cancel();
-  clearTimeout(dictTm);clearTimeout(wordTm);$('diagbanner').classList.remove('on');
+  $('diagbanner').classList.remove('on');
   const t=Math.max(0,idx-1);
   if(!paused)play(t);
   else{idx=t;updateUI(flat[idx],idx);$('senttext').textContent=flat[idx].text;}
