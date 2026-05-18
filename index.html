@@ -776,8 +776,7 @@ function showReview(){
 $('genbtn').addEventListener('click',generate);
 $('redoBtn').addEventListener('click',()=>go('s0'));
 $('startBtn').addEventListener('click', () => {
-  unlockSpeech();
-  doCountdown();
+  startDict();
 });
 $('prevbtn').addEventListener('click',prevSent);
 $('ppbtn').addEventListener('click',togglePause);
