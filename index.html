@@ -343,16 +343,52 @@ const TOPICS=[
   {v:'trade',label:'Trade / Globalisation'}
 ];
 let currentUtterance = null;
-let voiceReady = false;
-function speakText(text) {
+let availableVoices = [];
+let voicesLoaded = false;
+
+function loadVoices() {
+  return new Promise(resolve => {
+    const voices = window.speechSynthesis.getVoices();
+
+    if (voices && voices.length > 0) {
+      availableVoices = voices;
+      voicesLoaded = true;
+      resolve(voices);
+      return;
+    }
+
+    window.speechSynthesis.onvoiceschanged = () => {
+      const newVoices = window.speechSynthesis.getVoices();
+      availableVoices = newVoices;
+      voicesLoaded = true;
+      resolve(newVoices);
+    };
+
+    setTimeout(() => {
+      const fallbackVoices = window.speechSynthesis.getVoices();
+      availableVoices = fallbackVoices;
+      voicesLoaded = true;
+      resolve(fallbackVoices);
+    }, 1000);
+  });
+}
+
+async function speakText(text) {
   if (!('speechSynthesis' in window)) {
     console.warn('Speech synthesis not supported.');
     return;
   }
 
-  const u = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.cancel();
 
-  u.lang = 'en-GB';
+  if (!voicesLoaded) {
+    await loadVoices();
+  }
+
+  const u = new SpeechSynthesisUtterance(text);
+  currentUtterance = u;
+
+  u.lang = 'en-US';
   u.pitch = 1;
   u.volume = 1;
 
@@ -368,23 +404,46 @@ function speakText(text) {
     u.rate = 0.9;
   }
 
-  const voices = window.speechSynthesis.getVoices();
   const preferred =
-    voices.find(v => v.lang === 'en-GB') ||
-    voices.find(v => v.lang.startsWith('en')) ||
-    voices[0];
+    availableVoices.find(v => v.lang === 'en-US' && /natural|online|aria|jenny|guy|samantha/i.test(v.name)) ||
+    availableVoices.find(v => v.lang === 'en-US') ||
+    availableVoices.find(v => v.lang && v.lang.startsWith('en')) ||
+    availableVoices[0];
 
   if (preferred) {
     u.voice = preferred;
+    console.log('Using voice:', preferred.name, preferred.lang);
+  } else {
+    console.log('No specific voice found. Using browser default.');
   }
 
+  u.onstart = () => {
+    console.log('Speech started:', text);
+  };
+
+  u.onend = () => {
+    console.log('Speech ended');
+    currentUtterance = null;
+  };
+
   u.onerror = e => {
-    if (e.error !== 'canceled') {
-      console.warn('Speech error:', e);
-    }
+    console.warn('Speech error:', e.error, e);
+    currentUtterance = null;
   };
 
   window.speechSynthesis.speak(u);
+
+  // Chrome/Edge sometimes need this after speak().
+  window.speechSynthesis.resume();
+
+  setTimeout(() => {
+    console.log({
+      speaking: window.speechSynthesis.speaking,
+      pending: window.speechSynthesis.pending,
+      paused: window.speechSynthesis.paused,
+      currentText: text
+    });
+  }, 300);
 }
 const LN={
 macro:`Fiscal policy: use of taxation and government spending to manage AD to achieve macroeconomic aims.
