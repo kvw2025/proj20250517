@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>A2 Econ · Essay Dictation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Playfair+Display:wght@400&family=Inter:wght@300;400;500&display=swap');
+:root{
+  --bg:#0a0a0c;--surf:#111114;--card:#16161a;--b1:#1e1e22;--b2:#2a2a30;
+  --acc:#b8f060;--blue:#60b8f0;--org:#f0a060;--red:#f06060;
+  --txt:#e4e4e8;--mut:#55555f;--mut2:#888890;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%;height:-webkit-fill-available}
+body{
+  font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);
+  font-size:15px;height:100%;height:-webkit-fill-available;
+  overflow:hidden;touch-action:manipulation;
+}
+.scr{display:none;height:100%;height:-webkit-fill-available;overflow-y:auto;flex-direction:column;-webkit-overflow-scrolling:touch}
+.scr.on{display:flex}
+h2{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:400;line-height:1.3}
+.sub{font-size:13px;color:var(--mut2);line-height:1.65}
+.lbl{display:block;font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:7px}
+input,textarea,select{
+  width:100%;background:var(--surf);border:1px solid var(--b1);border-radius:10px;
+  color:var(--txt);font-family:'Inter',sans-serif;font-size:16px;
+  padding:13px 15px;outline:none;transition:border-color .2s;margin-bottom:1.1rem;
+  -webkit-appearance:none;appearance:none;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--acc)}
+textarea{min-height:90px;line-height:1.6;resize:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2355555f' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.2rem}
+.ttag{
+  font-size:13px;font-family:'IBM Plex Mono',monospace;
+  padding:7px 14px;border-radius:20px;border:1px solid var(--b1);
+  background:transparent;color:var(--mut);cursor:pointer;transition:all .15s;
+  user-select:none;-webkit-user-select:none;
+}
+.ttag.on{border-color:var(--acc);color:var(--acc);background:rgba(184,240,96,.08)}
+.btn{
+  border:none;border-radius:12px;font-family:'Inter',sans-serif;
+  font-size:16px;font-weight:500;cursor:pointer;
+  transition:opacity .15s,transform .1s;padding:15px 20px;
+  -webkit-appearance:none;
+}
+.btn-p{background:var(--acc);color:#0a0a0c;width:100%}
+.btn-p:active{opacity:.8;transform:scale(.98)}
+.btn-s{background:transparent;border:1px solid var(--b2);color:var(--mut2)}
+.btn-s:active{background:var(--b1)}
+.errbox{
+  background:rgba(240,96,96,.1);border:1px solid rgba(240,96,96,.25);
+  border-radius:10px;padding:.8rem 1rem;font-size:13px;color:var(--red);
+  display:none;margin-bottom:1rem;line-height:1.55
+}
+.errbox.on{display:block}
+.apibox{
+  background:rgba(184,240,96,.05);border:1px solid rgba(184,240,96,.15);
+  border-radius:12px;padding:1rem 1.1rem;margin-bottom:1.2rem
+}
+.apibox p{font-size:13px;color:var(--mut2);margin-bottom:.8rem;line-height:1.55}
+.apibox a{color:var(--acc);text-decoration:none}
+
+/* GENERATING */
+.spin-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;flex:1;padding:2rem}
+.spin{width:36px;height:36px;border:2px solid var(--b2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* STRUCTURE */
+.pcrd{border-left:2px solid var(--b2);padding:.8rem 0 .8rem 1rem;margin-bottom:.85rem}
+.pcrd.ao1{border-color:var(--blue)}
+.pcrd.ao2{border-color:var(--acc)}
+.pcrd.ao3{border-color:var(--org)}
+.badge{display:inline-block;font-size:10px;font-family:'IBM Plex Mono',monospace;padding:3px 9px;border-radius:20px;letter-spacing:.08em}
+.b1c{background:rgba(96,184,240,.15);color:var(--blue)}
+.b2c{background:rgba(184,240,96,.15);color:var(--acc)}
+.b3c{background:rgba(240,160,96,.15);color:var(--org)}
+.bdc{background:rgba(240,96,96,.15);color:var(--red)}
+.psents{font-size:12.5px;color:var(--mut);line-height:1.75;margin-top:5px}
+
+/* COUNTDOWN */
+.cd-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6rem;flex:1}
+.cdnum{font-family:'Playfair Display',serif;font-size:min(40vw,180px);line-height:1;color:var(--acc);animation:pop .85s cubic-bezier(.16,1,.3,1)}
+@keyframes pop{0%{transform:scale(1.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.cdsub{font-size:13px;color:var(--mut);font-family:'IBM Plex Mono',monospace;letter-spacing:.15em;text-transform:uppercase}
+
+/* DICTATION */
+#s4{padding:0;gap:0;height:100%;height:-webkit-fill-available}
+.dict-wrap{display:flex;flex-direction:column;height:100%;height:-webkit-fill-available}
+.dtop{
+  display:flex;align-items:center;gap:10px;
+  padding:calc(.75rem + var(--safe-top)) 1.25rem .75rem;
+  border-bottom:1px solid var(--b1);background:var(--surf);flex-shrink:0
+}
+.dtitle{font-size:12px;color:var(--mut2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'IBM Plex Mono',monospace}
+.ptrack{flex:1;height:3px;background:var(--b1);border-radius:2px;margin:0 8px}
+.pfill{height:100%;background:var(--acc);border-radius:2px;transition:width .4s}
+.dtimer{font-size:12px;color:var(--mut);font-family:'IBM Plex Mono',monospace;min-width:44px;text-align:right}
+.ptabs{display:flex;gap:6px;padding:.55rem 1.25rem;border-bottom:1px solid var(--b1);background:var(--surf);overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch}
+.ptabs::-webkit-scrollbar{display:none}
+.ptab{font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 11px;border-radius:20px;border:1px solid var(--b1);color:var(--mut);cursor:pointer;white-space:nowrap;background:transparent;transition:all .15s;flex-shrink:0}
+.ptab.ta1{background:var(--blue);border-color:var(--blue);color:#0a0a0c}
+.ptab.ta2{background:var(--acc);border-color:var(--acc);color:#0a0a0c}
+.ptab.ta3{background:var(--org);border-color:var(--org);color:#0a0a0c}
+.ptab.tdone{opacity:.3;text-decoration:line-through}
+.dstage{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:1.5rem 1.25rem;gap:1.1rem;overflow:hidden
+}
+.dmeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.snum{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;letter-spacing:.08em}
+.diagbanner{
+  background:rgba(240,96,96,.08);border:1px solid rgba(240,96,96,.2);
+  border-radius:10px;padding:.7rem 1rem;font-size:13px;color:var(--red);
+  font-family:'IBM Plex Mono',monospace;text-align:center;
+  display:none;width:100%;max-width:560px;line-height:1.5
+}
+.diagbanner.on{display:block}
+.senttext{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.15rem,5vw,1.8rem);
+  line-height:1.6;text-align:center;max-width:680px;width:100%
+}
+.senthint{font-size:12px;color:var(--mut);font-style:italic;text-align:center;max-width:480px;line-height:1.5}
+.wdone{color:var(--mut)}
+.wcurr{color:var(--acc);font-weight:500}
+.ctrls{display:flex;align-items:center;gap:10px}
+.cbtn{
+  width:52px;height:52px;border-radius:50%;
+  border:1px solid var(--b2);background:transparent;
+  color:var(--txt);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;-webkit-appearance:none;
+  user-select:none;-webkit-user-select:none;
+}
+.cbtn:active{background:var(--b1)}
+.cbtn.play{
+  width:68px;height:68px;font-size:22px;
+  background:var(--acc);border-color:var(--acc);color:#0a0a0c
+}
+.cbtn.play:active{opacity:.8}
+.nxtbar{
+  padding:.6rem 1.25rem calc(.6rem + var(--safe-bottom));
+  border-top:1px solid var(--b1);background:var(--surf);
+  display:flex;align-items:center;gap:8px;flex-shrink:0
+}
+.nxtlbl{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--mut);letter-spacing:.12em;text-transform:uppercase;flex-shrink:0}
+.nxttxt{font-size:13px;color:var(--mut2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* COMPLETE */
+.donewrap{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;gap:1.1rem;padding:3rem 1.5rem;
+  justify-content:center;flex:1
+}
+.dstats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.dstat{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:.9rem 1.2rem;text-align:center;min-width:75px}
+.dstat .n{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--acc)}
+.dstat .l{font-size:10px;color:var(--mut);margin-top:3px;text-transform:uppercase;letter-spacing:.08em;font-family:'IBM Plex Mono',monospace}
+.donebtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%}
+
+/* PAUSE OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(10,10,12,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;z-index:100}
+.overlay.on{display:flex}
+.pause-box{background:var(--card);border:1px solid var(--b2);border-radius:18px;padding:2.5rem 2rem;text-align:center;display:flex;flex-direction:column;gap:.8rem;align-items:center;margin:1rem;width:100%;max-width:320px}
+.pause-big{font-family:'Playfair Display',serif;font-size:3rem}
+.pause-hint{font-size:13px;color:var(--mut);font-family:'IBM Plex Mono',monospace;letter-spacing:.06em}
+
+/* REVIEW */
+.review-modal{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:1.5rem;-webkit-overflow-scrolling:touch}
+.review-modal.on{display:block}
+.review-inner{max-width:680px;margin:0 auto}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- S0: INPUT -->
+<div class="scr on" id="s0">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:1.5rem 1rem 2rem;gap:1rem;padding-top:calc(1.5rem + env(safe-area-inset-top))">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut);letter-spacing:.2em;text-transform:uppercase;text-align:center">
+      A2 Econ &nbsp;·&nbsp; <span style="color:var(--acc)">Essay Dictation</span>
+    </div>
+    <div style="width:100%;max-width:560px;background:var(--card);border:1px solid var(--b1);border-radius:16px;padding:1.5rem">
+      <h2 style="margin-bottom:.3rem">Generate &amp; Dictate</h2>
+      <p class="sub" style="margin-bottom:1.4rem">Enter a question → AI builds a mark-scheme essay → reads it at pen speed.</p>
+
+      <div class="apibox" id="apibox">
+        <p>Needs your Anthropic API key to call the AI. Saved in your browser only.<br>
+        Get one free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys (~$0.02/essay)</p>
+        <label class="lbl">API Key</label>
+        <input type="password" id="apikey" placeholder="sk-ant-..." autocomplete="off" style="font-family:'IBM Plex Mono',monospace;font-size:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-top:-.4rem;margin-bottom:.3rem">
+          <input type="checkbox" id="savekey" checked style="width:18px;height:18px;margin:0;padding:0;accent-color:var(--acc);flex-shrink:0">
+          <label for="savekey" style="font-size:13px;color:var(--mut2);text-transform:none;letter-spacing:0;margin:0;cursor:pointer">Save in browser</label>
+        </div>
+      </div>
+
+      <label class="lbl">Question or keywords</label>
+      <textarea id="qin" placeholder="e.g. 'Evaluate monetary policy in reducing inflation'&#10;&#10;or: 'fiscal policy, crowding out, evaluation'"></textarea>
+
+      <label class="lbl">Topic area</label>
+      <div class="tags" id="tagrow"></div>
+
+      <div class="g2">
+        <div>
+          <label class="lbl">Marks</label>
+          <select id="msel">
+            <option value="8">[8] Short analysis</option>
+            <option value="12">[12] + Evaluation</option>
+            <option value="20" selected>[20] Full essay</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Speed</label>
+          <select id="ssel">
+            <option value="2400">Slower</option>
+            <option value="2000" selected>Normal</option>
+            <option value="1600">Faster</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="errbox" id="errbox"></div>
+      <button class="btn btn-p" id="genbtn">Generate essay →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S1: GENERATING -->
+<div class="scr" id="s1">
+  <div class="spin-wrap">
+    <div class="spin"></div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:400">Building essay…</div>
+    <div style="font-size:12px;color:var(--mut);font-family:'IBM Plex Mono',monospace;text-align:center;padding:0 2rem" id="genmsg">Consulting mark scheme…</div>
+  </div>
+</div>
+
+<!-- S2: STRUCTURE PREVIEW -->
+<div class="scr" id="s2">
+  <div style="padding:1.25rem;max-width:660px;margin:0 auto;width:100%">
+    <h2 id="sttitle" style="margin-bottom:.3rem">—</h2>
+    <p class="sub" id="stq" style="margin-bottom:1.4rem;font-style:italic">—</p>
+    <div id="stbody"></div>
+    <div style="display:flex;gap:10px;margin-top:1rem;padding-bottom:2rem">
+      <button class="btn btn-s" id="redoBtn" style="flex:1">← Redo</button>
+      <button class="btn btn-p" id="startBtn" style="flex:2">Start →</button>
+    </div>
+  </div>
+</div>
+
+<!-- S3: COUNTDOWN -->
+<div class="scr" id="s3">
+  <div class="cd-wrap">
+    <div class="cdnum" id="cdnum">3</div>
+    <div class="cdsub">Get pen &amp; paper ready</div>
+  </div>
+</div>
+
+<!-- S4: DICTATION -->
+<div class="scr" id="s4">
+  <div class="dict-wrap">
+    <div class="dtop">
+      <span class="dtitle" id="dtitle">—</span>
+      <div class="ptrack"><div class="pfill" id="prog" style="width:0%"></div></div>
+      <span class="dtimer" id="dtimer">00:00</span>
+    </div>
+    <div class="ptabs" id="ptabs"></div>
+    <div class="dstage">
+      <div class="dmeta">
+        <span class="badge" id="aopill">AO1</span>
+        <span class="snum" id="snum">1 / —</span>
+      </div>
+      <div class="diagbanner" id="diagbanner">Draw diagram here</div>
+      <div class="senttext" id="senttext">—</div>
+      <div class="senthint" id="senthint"></div>
+      <div class="ctrls">
+        <button class="cbtn" id="prevbtn" aria-label="Previous">&#8592;</button>
+        <button class="cbtn play" id="ppbtn" aria-label="Pause">&#9646;&#9646;</button>
+        <button class="cbtn" id="nextbtn" aria-label="Next">&#8594;</button>
+        <button class="cbtn" id="endbtn" aria-label="End" style="font-size:14px;border-color:rgba(240,96,96,.3);margin-left:4px">&#10005;</button>
+      </div>
+    </div>
+    <div class="nxtbar">
+      <span class="nxtlbl">Next</span>
+      <span class="nxttxt" id="nxttxt">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- S5: COMPLETE -->
+<div class="scr" id="s5">
+  <div class="donewrap">
+    <div style="font-size:3rem">&#10003;</div>
+    <h2>Essay complete</h2>
+    <p class="sub">Check your writing against the model below.</p>
+    <div class="dstats" id="dstats"></div>
+    <div class="donebtns">
+      <button class="btn btn-s" id="reviewBtn" style="flex:1">View essay</button>
+      <button class="btn btn-s" id="replayBtn" style="flex:1">&#8634; Replay</button>
+    </div>
+    <button class="btn btn-p" id="newBtn" style="width:100%">New essay</button>
+  </div>
+</div>
+
+<!-- Pause overlay -->
+<div class="overlay" id="pauselay">
+  <div class="pause-box">
+    <div class="pause-big">Paused</div>
+    <div class="pause-hint">tap resume to continue</div>
+    <button class="btn btn-p" id="resumebtn" style="width:100%;margin-top:.3rem">&#9654; Resume</button>
+  </div>
+</div>
+
+<!-- Review modal -->
+<div class="review-modal" id="reviewModal">
+  <div class="review-inner">
+    <button class="btn btn-s" id="closeReview" style="margin-bottom:1.5rem">&#8592; Back</button>
+    <div id="reviewbody"></div>
+    <div style="height:calc(2rem + env(safe-area-inset-bottom))"></div>
+  </div>
+</div>
+
+<script>
+const TOPICS=[
+  {v:'macro',label:'Macro Policy'},
+  {v:'micro',label:'Market Structure'},
+  {v:'mf',label:'Market Failure'},
+  {v:'labour',label:'Labour Market'},
+  {v:'con',label:'Consumer Theory'},
+  {v:'dev',label:'Development'},
+  {v:'trade',label:'Trade / Globalisation'}
+];
+let currentUtterance = null;
+let voiceReady = false;
+function speakText(text, onEnd) {
+  if (!('speechSynthesis' in window)) {
+    console.warn('Speech synthesis not supported in this browser.');
+    if (onEnd) onEnd();
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const u = new SpeechSynthesisUtterance(text);
+
+  u.lang = 'en-GB';
+
+  const speedValue = parseInt($('ssel').value);
+
+  if (speedValue === 2400) {
+    u.rate = 0.65;
+  } else if (speedValue === 2000) {
+    u.rate = 0.78;
+  } else if (speedValue === 1600) {
+    u.rate = 0.92;
+  } else {
+    u.rate = 0.75;
+  }
+
+  u.pitch = 1;
+  u.volume = 1;
+
+  const voices = window.speechSynthesis.getVoices();
+  const preferred =
+    voices.find(v => v.lang === 'en-GB' && /female|samantha|serena|daniel|google/i.test(v.name)) ||
+    voices.find(v => v.lang.startsWith('en')) ||
+    voices[0];
+
+  if (preferred) {
+    u.voice = preferred;
+  }
+
+  u.onend = () => {
+    if (onEnd) onEnd();
+  };
+
+  u.onerror = err => {
+    console.warn('Speech error:', err);
+    if (onEnd) onEnd();
+  };
+
+  window.speechSynthesis.speak(u);
+}
+const LN={
+macro:`Fiscal policy: use of taxation and government spending to manage AD to achieve macroeconomic aims.
+Monetary policy: use of interest rates and money supply by central bank to manage AD.
+AD = C+I+G+(X-M). Multiplier = 1/(1-MPC). If MPC=0.8 then multiplier=5.
+Expansionary FP: increase G or cut tax → AD shifts right → real output rises → employment rises.
+Contractionary FP: increase tax or cut G → AD shifts left → inflation falls.
+QE: central bank buys bonds → money supply rises → interest rates fall → investment rises → AD rises.
+NRU: voluntary + frictional + structural unemployment at Yfe.
+Phillips Curve: short-run inverse trade-off inflation vs unemployment (SPC). LPC is vertical at NRU.
+Devaluation improves CA only if Marshall-Lerner condition: PED_x + PED_m > 1.
+J-curve: short-run CA worsens after devaluation before improving in long run.
+EVALUATION: Crowding out: gov borrowing raises interest rates → private investment falls; Crowding in: multiplier raises income → more private spending; Time lags; Automatic stabilisers; Laffer curve; Liquidity trap: near-zero rates → monetary policy loses effectiveness; Spare capacity determines whether AD rise raises output or mainly prices.
+DIAGRAMS: AD/AS with SRAS and vertical LRAS at Yfe; SPC and LPC; J-curve.`,
+micro:`Perfect competition: infinite buyers/sellers, homogeneous product, price taker, free entry/exit. LR: P=AR=AC=MC, normal profit, productively and allocatively efficient.
+Monopoly: sole supplier, high barriers (patents), price setter. Profit max at MC=MR, supernormal profit. P>MC allocatively inefficient. Not at min AC productively inefficient. DWL exists.
+Monopolistic competition: many firms, differentiated products, free entry. LR: AR=AC, normal profit. P>MC allocatively inefficient. Excess capacity.
+Oligopoly: few dominant firms, high barriers, interdependence. Kinked demand → price rigidity. Cartel acts like monopoly. Game theory: incentive to cheat → cartels unstable.
+Productive efficiency: min AC. Allocative efficiency: P=MC. Dynamic efficiency: R&D. X-inefficiency: no competition → costs above minimum.
+EVALUATION: Dynamic efficiency argument for monopoly; Natural monopoly (only one firm efficient); Kinked demand explains price rigidity; Cartels unstable via prisoner's dilemma.
+DIAGRAMS: PC SR/LR; Monopoly (MC=MR, DWL); Natural monopoly with subsidy; Kinked demand.`,
+mf:`Market failure: free market fails to allocate efficiently → deviation from social optimum Q*.
+DWL: loss of social welfare (triangle between market output and social optimum).
+Allocative efficiency: P=MC, MB=MC at Q*.
+Negative externality: MSC>MPC → over-production → DWL. Positive externality: MSB>MPB → under-consumption → DWL.
+Interventions: Indirect tax (shifts MPC up → reduces output); Subsidy (shifts supply down → increases output); Tradable permits; Regulation/ban; Information provision; Direct provision; Nationalisation vs Privatisation.
+EVALUATION: Tax/subsidy hard to set correctly → government failure; Information: people may ignore; Regulation creates black markets.
+DIAGRAMS: Negative externality (MSC above MPC, DWL); Positive externality (MSB above MPB, DWL).`,
+labour:`MRP = Marginal Product × Price of product → firm's labour demand curve (downward sloping).
+Transfer earnings: minimum payment to keep factor in current use.
+Economic rent: payment above transfer earnings → explains wage differentials for scarce skills.
+Monopsony: sole buyer → MCL>SL → MRP=MCL → lower wage Wm than competitive Wc.
+Trade union in PC market: pushes W above Wc → wage rises but employment falls.
+Trade union vs monopsony (bilateral monopoly): may raise BOTH wage AND employment if W between Wm and Wc.
+Minimum wage in monopsony: if between Wm and Wc → raises both wage and employment.
+EVALUATION: Elasticity determines impact; Government as largest monopsonist; Discrimination explains wage gaps.
+DIAGRAMS: PC labour market; Monopsony (MCL, MRP=DL); Bilateral monopoly.`,
+con:`Utility: satisfaction from consumption. MU: additional utility from one more unit.
+Law of diminishing MU: as consumption rises, MU falls within a given period.
+Consumer equilibrium (MU): equi-marginal principle: MU_A/P_A = MU_B/P_B.
+IC: all combinations of 2 goods giving same utility. Convex to origin (diminishing MRS). Never cross.
+BL: all combinations purchasable with given income at given prices.
+Consumer equilibrium: BL tangent to highest IC. MRS = price ratio.
+SE: change in Q due to relative price change. Always positive for price fall.
+YE: change in Q due to change in real income. Normal: positive. Inferior: negative. Giffen: |YE|>|SE|.
+DIAGRAMS: IC map with BL; Tangency equilibrium; SE/YE decomposition.`,
+dev:`Economic development: improving wellbeing — poverty, health, education, choices.
+Standard of living: material and spiritual quality of life.
+Low-income country: GNI per capita < $1,025. High-income: > $13,846.
+FDI: investment by MNCs to create/extend production in host country.
+HDI: GNI per capita + education + life expectancy. Scale 0-1.
+MPI: poverty across health (33%), education (33%), living standards (33%).
+Poverty cycle: low income → low savings → low investment → low productivity → low income.
+Gini coefficient: 0=perfect equality, 1=perfect inequality.
+EVALUATION: FDI creates jobs/tech BUT profits repatriated; Aid breaks poverty cycle BUT dependency/corruption; GNI ignores distribution.`,
+trade:`Free Trade Area: remove internal barriers, keep own external tariffs.
+Customs Union: FTA + common external tariff.
+Monetary Union: shared currency + coordinated monetary policy (e.g. Eurozone).
+Trade creation: tariff removal → cheaper imports from more efficient member → welfare gain.
+Trade diversion: imports diverted from efficient non-member to less efficient member → welfare loss.
+EVALUATION: Trade diversion may outweigh creation; Loss of independent monetary policy in monetary union; Migration: brain drain but remittances; MNCs bring technology but repatriate profits.
+DIAGRAMS: Trade creation and diversion welfare diagrams.`
+};
+
+let essay=null,flat=[],idx=0,paused=false;
+let dictTm=null,wordTm=null,timerInt=null,sessStart=null,wSpeed=2000;
+let activeTopic='macro';
+
+const $=id=>document.getElementById(id);
+function go(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));$(id).classList.add('on')}
+function showErr(m){const e=$('errbox');e.innerHTML=m;e.classList.add('on')}
+function hideErr(){$('errbox').classList.remove('on')}
+
+function buildTags(){
+  const row=$('tagrow');row.innerHTML='';
+  TOPICS.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='ttag'+(t.v===activeTopic?' on':'');
+    b.textContent=t.label;
+    b.addEventListener('click',function(){
+      activeTopic=t.v;
+      document.querySelectorAll('.ttag').forEach(x=>x.classList.remove('on'));
+      this.classList.add('on');
+    });
+    row.appendChild(b);
+  });
+}
+
+function loadKey(){
+  const k=localStorage.getItem('a2_api_key_v2');
+  if(k)$('apikey').value=k;
+}
+
+async function generate(){
+  const apiKey=$('apikey').value.trim();
+  if(!apiKey){showErr('Enter your Anthropic API key above first.');$('apikey').focus();return;}
+  if($('savekey').checked)localStorage.setItem('a2_api_key_v2',apiKey);
+  const q=$('qin').value.trim();
+  if(!q){showErr('Enter a question or keywords.');$('qin').focus();return;}
+  hideErr();
+  wSpeed=parseInt($('ssel').value);
+  
+  const marks=$('msel').value;
+  const notes=LN[activeTopic]||'';
+  go('s1');
+  $('genmsg').textContent='Consulting mark scheme and lecture notes…';
+
+  const struct=marks==='20'
+    ?'5 paragraphs: (1)AO1 Definitions+Intro 3-4 sentences define ALL key terms precisely, (2)AO2 Main analysis 3-5 sentences logical chain + diagram, (3)AO2 Second point 3-5 sentences, (4)AO3 Main evaluation 3-4 sentences use conditions/time horizons/elasticity, (5)AO3 Further eval+balanced conclusion 3-4 sentences'
+    :marks==='12'
+    ?'3 paragraphs: (1)AO1 Definitions 2-3 sentences, (2)AO2 Analysis 4-5 sentences with diagram, (3)AO3 Evaluation 3-4 sentences'
+    :'2 paragraphs: (1)AO1 Definitions 2-3 sentences, (2)AO2 Analysis 4-5 sentences with diagram';
+
+  const prompt=`You are a CIE A-Level Economics (9708) expert. Write a high-scoring [${marks}] mark model essay for dictation practice.
+
+QUESTION: "${q}"
+
+LECTURE NOTES — use these exact definitions and analysis chains:
+${notes}
+
+RULES:
+1. MAX 18 words per sentence. Short sentences = essential for pen-speed dictation.
+2. Use precise definitions from lecture notes above.
+3. AO2: logical chains with arrows e.g. "Lower interest rates → higher borrowing → higher AD".
+4. AO3: conditional ("This depends on..."), time horizons, elasticity arguments.
+5. diagram_note: if a diagram earns marks, describe exactly what to draw. Otherwise null.
+6. scoring_hint: what AO marks this paragraph targets and why.
+7. No filler. Every sentence scores marks.
+
+STRUCTURE: ${struct}
+
+OUTPUT valid JSON only, no markdown fences, no text outside JSON:
+{"title":"short topic title","question":"${q.replace(/\\/g,'\\\\').replace(/"/g,'\\"')}","paragraphs":[{"ao":"AO1","label":"Definitions and introduction","scoring_hint":"AO1 — definitions of [key terms]","diagram_note":null,"sentences":["Sentence one.","Sentence two."]}]}`;
+
+  try{
+    $('genmsg').textContent='Generating essay…';
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access': 'true'},
+      body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1500,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' — '+t.slice(0,180));}
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    const raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    $('genmsg').textContent='Parsing structure…';
+    essay=parseJ(raw,q,marks);essay.marks=marks;
+    flat=mkFlat(essay);showStruct();
+  }catch(e){
+    go('s0');showErr('Failed: '+e.message+'<br><small>Check your API key and internet connection.</small>');
+  }
+}
+
+function parseJ(raw,q,marks){
+  let c=raw.trim();
+  const f=c.indexOf('```');if(f>-1){const e=c.lastIndexOf('```');c=c.slice(f+3,e>f?e:c.length).replace(/^json\n?/,'').trim();}
+  try{return JSON.parse(c);}catch(e){
+    const s=c.indexOf('{'),e2=c.lastIndexOf('}');
+    if(s>-1&&e2>s){try{return JSON.parse(c.slice(s,e2+1));}catch(e3){}}
+    return{title:'Model Essay',question:q,marks,paragraphs:[
+      {ao:'AO1',label:'Definitions',scoring_hint:'AO1 definitions',diagram_note:null,sentences:['Define the key terms carefully.','Precise definitions earn AO1 marks.']},
+      {ao:'AO2',label:'Analysis',scoring_hint:'AO2 analysis chain',diagram_note:'Draw relevant diagram here',sentences:['The main mechanism works as follows.','A change in the variable shifts the curve.','This creates a new equilibrium.','The extent depends on elasticity.']},
+      {ao:'AO3',label:'Evaluation',scoring_hint:'AO3 evaluation',diagram_note:null,sentences:['However, effectiveness depends on several factors.','Time lags reduce the impact in the short run.','The policy works best when the economy has spare capacity.']}
+    ]};
+  }
+}
+
+function mkFlat(data){
+  const r=[];
+  data.paragraphs.forEach((p,pi)=>{
+    if(p.diagram_note)r.push({type:'diag',text:p.diagram_note,pi,ao:p.ao,label:p.label,hint:'Draw this diagram — worth marks'});
+    p.sentences.forEach((s,si)=>r.push({type:'sent',text:s,pi,ao:p.ao,label:p.label,hint:si===0&&!p.diagram_note?(p.scoring_hint||''):''}));
+  });
+  return r;
+}
+
+function aoCls(ao){const a=(ao||'').toLowerCase().replace(/\s/g,'');return a==='ao1'?'b1c':a==='ao2'?'b2c':'b3c'}
+function tabCls(ao){const a=(ao||'').toLowerCase().replace(/\s/g,'');return a==='ao1'?'ta1':a==='ao2'?'ta2':'ta3'}
+
+function showStruct(){
+  $('sttitle').textContent=essay.title||'Essay';
+  $('stq').textContent=essay.question;
+  const b=$('stbody');b.innerHTML='';
+  essay.paragraphs.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='pcrd '+(p.ao||'').toLowerCase().replace(/\s/g,'');
+    d.innerHTML=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="badge ${aoCls(p.ao)}">${p.ao}</span>
+      <span style="font-size:13px;font-weight:500">Para ${i+1}: ${p.label}</span>
+      ${p.scoring_hint?`<div style="font-size:11px;color:var(--mut);width:100%;margin-top:2px">${p.scoring_hint}</div>`:''}
+    </div>
+    ${p.diagram_note?`<div style="font-size:12px;color:var(--red);margin:5px 0;font-style:italic">✏ ${p.diagram_note}</div>`:''}
+    <div class="psents">${p.sentences.map((s,j)=>`<span style="display:block">${j===0?'→ ':''}"${s.length>80?s.slice(0,80)+'…':s}"</span>`).join('')}</div>`;
+    b.appendChild(d);
+  });
+  go('s2');
+}
+
+function doCountdown(){
+  go('s3');let n=3;
+  const el=$('cdnum');
+  function tick(){el.textContent=n;el.style.animation='none';void el.offsetWidth;el.style.animation='pop .85s cubic-bezier(.16,1,.3,1)';if(n===0){setTimeout(startDict,900);return;}n--;setTimeout(tick,1000);}
+  tick();
+}
+
+function startDict(){
+  idx=0;paused=false;sessStart=Date.now();
+  $('dtitle').textContent=essay.title||'Essay';
+  const tabs=$('ptabs');tabs.innerHTML='';
+  essay.paragraphs.forEach((p,i)=>{
+    const b=document.createElement('button');b.className='ptab';b.id='pt'+i;
+    b.textContent=p.ao+' · '+p.label;
+    b.addEventListener('click',()=>jumpPara(i));tabs.appendChild(b);
+  });
+  go('s4');startTimer();play(0);
+}
+
+function startTimer(){
+  timerInt=setInterval(()=>{
+    if(paused)return;
+    const s=Math.floor((Date.now()-sessStart)/1000);
+    $('dtimer').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },1000);
+}
+
+function play(i){
+  if(i>=flat.length){finish();return;}
+  idx=i;const item=flat[i];updateUI(item,i);
+  if(item.type==='diag'){
+    $('diagbanner').textContent='✏ Draw: '+item.text;
+    $('diagbanner').classList.add('on');
+    $('senttext').style.opacity='.2';
+    $('senttext').textContent='[ drawing time — ~12 seconds ]';
+    dictTm=setTimeout(()=>{if(!paused){$('diagbanner').classList.remove('on');$('senttext').style.opacity='1';play(i+1);}},12000);
+    return;
+  }
+  $('diagbanner').classList.remove('on');
+  $('senttext').style.opacity='1';
+const words = item.text.split(/\s+/);
+const rt = words.length * wSpeed;
+
+animWords(words, rt);
+
+speakText(item.text, () => {
+  if (!paused) play(i + 1);
+});
+}
+function animWords(words,total){
+  const el=$('senttext');
+  const tpw=total/words.length;let wi=0;
+  function step(){
+    if(wi>=words.length)return;
+    const b=words.slice(0,wi).map(w=>`<span class="wdone">${w}</span>`).join(' ');
+    const c=`<span class="wcurr">${words[wi]}</span>`;
+    const a=wi<words.length-1?' '+words.slice(wi+1).join(' '):'';
+    el.innerHTML=(b?b+' ':'')+c+a;wi++;wordTm=setTimeout(step,tpw);
+  }step();
+}
+
+function updateUI(item,i){
+  $('prog').style.width=((i+1)/flat.length*100)+'%';
+  $('snum').textContent=(i+1)+' / '+flat.length;
+  const pill=$('aopill');
+  pill.textContent=item.type==='diag'?'DIAGRAM':item.ao;
+  pill.className='badge '+(item.type==='diag'?'bdc':aoCls(item.ao));
+  document.querySelectorAll('.ptab').forEach((t,i2)=>{
+    t.className='ptab';
+    if(i2===item.pi)t.classList.add(tabCls(item.ao));
+    if(i2<item.pi)t.classList.add('tdone');
+  });
+  $('senthint').textContent=item.hint||'';
+  if(item.type!=='diag')$('senttext').textContent=item.text;
+  const nx=flat[i+1];
+  $('nxttxt').textContent=nx?(nx.type==='diag'?'[Draw: '+nx.text+']':nx.text):'— End of essay —';
+}
+
+function togglePause(){
+  paused=!paused;
+  const btn=$('ppbtn'),ov=$('pauselay');if (paused) {
+  clearTimeout(dictTm);
+  clearTimeout(wordTm);
+  window.speechSynthesis.pause();
+  btn.innerHTML = '&#9654;';
+  ov.classList.add('on');
+} else {
+  btn.innerHTML = '&#9646;&#9646;';
+  ov.classList.remove('on');
+  window.speechSynthesis.resume();
+}
+}
+function nextSent(){
+  window.speechSynthesis.cancel();
+  clearTimeout(dictTm);clearTimeout(wordTm);$('diagbanner').classList.remove('on');
+  if(!paused)play(idx+1);
+  else{idx=Math.min(idx+1,flat.length-1);updateUI(flat[idx],idx);$('senttext').textContent=flat[idx].text;}
+}
+function unlockSpeech() {
+  if (!('speechSynthesis' in window)) return;
+
+  const u = new SpeechSynthesisUtterance(' ');
+  u.volume = 0;
+  window.speechSynthesis.speak(u);
+  window.speechSynthesis.cancel();
+}
+
+function prevSent(){
+  window.speechSynthesis.cancel();
+  clearTimeout(dictTm);clearTimeout(wordTm);$('diagbanner').classList.remove('on');
+  const t=Math.max(0,idx-1);
+  if(!paused)play(t);
+  else{idx=t;updateUI(flat[idx],idx);$('senttext').textContent=flat[idx].text;}
+}
+function jumpPara(pi){
+  const t=flat.findIndex(s=>s.pi===pi);if(t<0)return;
+  clearTimeout(dictTm);clearTimeout(wordTm);$('diagbanner').classList.remove('on');
+  window.speechSynthesis.cancel();
+  if(!paused)play(t);
+  else{idx=t;updateUI(flat[idx],idx);$('senttext').textContent=flat[idx].text;}
+}
+function endSess(){if(!confirm('End this session?'))return;finish();}
+
+function finish(){
+  window.speechSynthesis.cancel();
+  clearTimeout(dictTm);clearTimeout(wordTm);clearInterval(timerInt);
+  const sec=Math.floor((Date.now()-sessStart)/1000);
+  const m=Math.floor(sec/60),s=sec%60;
+  const words=flat.filter(f=>f.type==='sent').reduce((a,f)=>a+f.text.split(/\s+/).length,0);
+  const sents=flat.filter(f=>f.type==='sent').length;
+  $('dstats').innerHTML=[
+    [String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'),'Time'],
+    [sents,'Sentences'],['~'+words,'Words'],[essay.marks||20,'Marks']
+  ].map(([n,l])=>`<div class="dstat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+  go('s5');
+}
+
+function showReview(){
+  const b=$('reviewbody');
+  b.innerHTML=`<h2 style="font-family:'Playfair Display',serif;font-weight:400;margin-bottom:.4rem">${essay.title}</h2>
+  <p style="font-size:13px;color:var(--mut2);font-style:italic;margin-bottom:1.8rem;line-height:1.5">${essay.question}</p>`+
+  essay.paragraphs.map(p=>`
+  <div style="margin-bottom:1.8rem;padding-bottom:1.8rem;border-bottom:1px solid var(--b1)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.4rem;flex-wrap:wrap">
+      <span class="badge ${aoCls(p.ao)}">${p.ao}</span>
+      <span style="font-size:14px;font-weight:500">${p.label}</span>
+    </div>
+    ${p.scoring_hint?`<p style="font-size:12px;color:var(--mut);font-style:italic;margin-bottom:.5rem">${p.scoring_hint}</p>`:''}
+    ${p.diagram_note?`<div style="background:rgba(240,96,96,.08);border:1px solid rgba(240,96,96,.2);border-radius:8px;padding:.5rem .9rem;font-size:13px;color:var(--red);margin-bottom:.7rem">✏ Draw: ${p.diagram_note}</div>`:''}
+    <p style="line-height:2;font-size:15px;color:var(--txt)">${p.sentences.join(' ')}</p>
+  </div>`).join('');
+  $('reviewModal').classList.add('on');
+}
+
+$('genbtn').addEventListener('click',generate);
+$('redoBtn').addEventListener('click',()=>go('s0'));
+$('startBtn').addEventListener('click', () => {
+  unlockSpeech();
+  doCountdown();
+});
+$('prevbtn').addEventListener('click',prevSent);
+$('ppbtn').addEventListener('click',togglePause);
+$('nextbtn').addEventListener('click',nextSent);
+$('endbtn').addEventListener('click',endSess);
+$('resumebtn').addEventListener('click',togglePause);
+$('reviewBtn').addEventListener('click',showReview);
+$('replayBtn').addEventListener('click',doCountdown);
+$('newBtn').addEventListener('click',()=>go('s0'));
+$('closeReview').addEventListener('click',()=>$('reviewModal').classList.remove('on'));
+
+document.addEventListener('keydown',e=>{
+  if(!$('s4').classList.contains('on'))return;
+  if(e.code==='Space'){e.preventDefault();togglePause();}
+  if(e.code==='ArrowRight'){e.preventDefault();nextSent();}
+  if(e.code==='ArrowLeft'){e.preventDefault();prevSent();}
+  if(e.key.toLowerCase()==='r')jumpPara(flat[idx]?.pi??0);
+  if(e.code==='Escape')endSess();
+});
+
+buildTags();loadKey();
+</script>
+</body>
+</html>
