@@ -344,47 +344,66 @@ const TOPICS=[
 ];
 let currentUtterance = null;
 let voiceReady = false;
-function speakText(text) {
+
+function speakText(text, onEnd) {
   if (!('speechSynthesis' in window)) {
     console.warn('Speech synthesis not supported.');
+    if (onEnd) onEnd();
     return;
   }
 
-  const u = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.cancel();
 
-  u.lang = 'en-GB';
+  const u = new SpeechSynthesisUtterance(text);
+  currentUtterance = u;
+
+  u.lang = 'en-US';
   u.pitch = 1;
   u.volume = 1;
 
   const msPerWord = parseInt($('ssel').value);
 
   if (msPerWord >= 2500) {
-    u.rate = 0.45;
-  } else if (msPerWord >= 2000) {
-    u.rate = 0.55;
-  } else if (msPerWord >= 1500) {
     u.rate = 0.7;
-  } else {
+  } else if (msPerWord >= 2000) {
+    u.rate = 0.78;
+  } else if (msPerWord >= 1500) {
     u.rate = 0.9;
+  } else {
+    u.rate = 1.05;
   }
 
   const voices = window.speechSynthesis.getVoices();
   const preferred =
-    voices.find(v => v.lang === 'en-GB') ||
-    voices.find(v => v.lang.startsWith('en')) ||
+    voices.find(v => v.lang === 'en-US') ||
+    voices.find(v => v.lang && v.lang.startsWith('en')) ||
     voices[0];
 
   if (preferred) {
     u.voice = preferred;
   }
 
+  u.onstart = () => {
+    console.log('Speech started:', text);
+  };
+
+  u.onend = () => {
+    console.log('Speech ended');
+    currentUtterance = null;
+    if (onEnd) onEnd();
+  };
+
   u.onerror = e => {
-    if (e.error !== 'canceled') {
-      console.warn('Speech error:', e);
+    console.warn('Speech error:', e.error, e);
+    currentUtterance = null;
+
+    if (e.error !== 'canceled' && onEnd) {
+      onEnd();
     }
   };
 
   window.speechSynthesis.speak(u);
+  window.speechSynthesis.resume();
 }
 const LN={
 macro:`Fiscal policy: use of taxation and government spending to manage AD to achieve macroeconomic aims.
@@ -640,19 +659,35 @@ function play(i){
   $('diagbanner').classList.remove('on');
   $('senttext').style.opacity = '1';
 
-  const words = item.text.split(/\s+/);
-  const msPerWord = parseInt($('ssel').value);
-  const rt = words.length * msPerWord;
+const words = item.text.split(/\s+/);
+const msPerWord = parseInt($('ssel').value);
+const rt = words.length * msPerWord;
 
-  animWords(words, rt);
-  speakText(item.text);
+animWords(words, rt);
 
-  dictTm = setTimeout(() => {
-    if(!paused){
-      window.speechSynthesis.cancel();
-      play(i + 1);
-    }
-  }, rt + 500);
+let advanced = false;
+
+speakText(item.text, () => {
+  if (advanced) return;
+  advanced = true;
+
+  clearTimeout(dictTm);
+
+  if (!paused) {
+    play(i + 1);
+  }
+});
+
+dictTm = setTimeout(() => {
+  if (advanced) return;
+  advanced = true;
+
+  window.speechSynthesis.cancel();
+
+  if (!paused) {
+    play(i + 1);
+  }
+}, rt + 500);
 }
 function animWords(words,total){
   const el=$('senttext');
@@ -685,6 +720,7 @@ function updateUI(item,i){
 
 function togglePause(){
   paused = !paused;
+
   const btn = $('ppbtn');
   const ov = $('pauselay');
 
@@ -699,8 +735,7 @@ function togglePause(){
     btn.innerHTML = '&#9646;&#9646;';
     ov.classList.remove('on');
 
-    window.speechSynthesis.cancel();
-    play(idx);
+    window.speechSynthesis.resume();
   }
 }
 function nextSent(){
