@@ -344,37 +344,33 @@ const TOPICS=[
 ];
 let currentUtterance = null;
 let voiceReady = false;
-function speakText(text, onEnd) {
+function speakText(text) {
   if (!('speechSynthesis' in window)) {
-    console.warn('Speech synthesis not supported in this browser.');
-    if (onEnd) onEnd();
+    console.warn('Speech synthesis not supported.');
     return;
   }
-
-  window.speechSynthesis.cancel();
 
   const u = new SpeechSynthesisUtterance(text);
 
   u.lang = 'en-GB';
-
-  const speedValue = parseInt($('ssel').value);
-
-  if (speedValue === 2400) {
-    u.rate = 0.65;
-  } else if (speedValue === 2000) {
-    u.rate = 0.78;
-  } else if (speedValue === 1600) {
-    u.rate = 0.92;
-  } else {
-    u.rate = 0.75;
-  }
-
   u.pitch = 1;
   u.volume = 1;
 
+  const msPerWord = parseInt($('ssel').value);
+
+  if (msPerWord >= 2500) {
+    u.rate = 0.45;
+  } else if (msPerWord >= 2000) {
+    u.rate = 0.55;
+  } else if (msPerWord >= 1500) {
+    u.rate = 0.7;
+  } else {
+    u.rate = 0.9;
+  }
+
   const voices = window.speechSynthesis.getVoices();
   const preferred =
-    voices.find(v => v.lang === 'en-GB' && /female|samantha|serena|daniel|google/i.test(v.name)) ||
+    voices.find(v => v.lang === 'en-GB') ||
     voices.find(v => v.lang.startsWith('en')) ||
     voices[0];
 
@@ -382,13 +378,10 @@ function speakText(text, onEnd) {
     u.voice = preferred;
   }
 
-  u.onend = () => {
-    if (onEnd) onEnd();
-  };
-
-  u.onerror = err => {
-    console.warn('Speech error:', err);
-    if (onEnd) onEnd();
+  u.onerror = e => {
+    if (e.error !== 'canceled') {
+      console.warn('Speech error:', e);
+    }
   };
 
   window.speechSynthesis.speak(u);
