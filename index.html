@@ -723,7 +723,6 @@ function unlockSpeech() {
   const u = new SpeechSynthesisUtterance(' ');
   u.volume = 0;
   window.speechSynthesis.speak(u);
-  window.speechSynthesis.cancel();
 }
 
 function prevSent(){
@@ -738,7 +737,6 @@ function prevSent(){
 function jumpPara(pi){
   const t=flat.findIndex(s=>s.pi===pi);if(t<0)return;
   clearTimeout(dictTm);clearTimeout(wordTm);$('diagbanner').classList.remove('on');
-  window.speechSynthesis.cancel();
   if(!paused)play(t);
   else{idx=t;updateUI(flat[idx],idx);$('senttext').textContent=flat[idx].text;}
 }
