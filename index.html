@@ -347,31 +347,63 @@ let currentUtterance = null;
 let speechToken = 0;
 let speechWaitTm = null;
 let isDictating = false;
-function waitMs(ms, token) {
+
+function sleepUntil(targetTime, token) {
   return new Promise(resolve => {
+    const delay = Math.max(0, targetTime - performance.now());
+
     speechWaitTm = setTimeout(() => {
       speechWaitTm = null;
       resolve(token === speechToken && isDictating && !paused);
-    }, ms);
+    }, delay);
   });
 }
-function stopAllSpeechAndTimers() {
-  isDictating = false;
-  speechToken++;
 
-  clearTimeout(dictTm);
-  clearTimeout(wordTm);
-  clearTimeout(speechWaitTm);
+function speakWord(word, token) {
+  return new Promise(resolve => {
+    if (!isDictating || paused || token !== speechToken) {
+      resolve(false);
+      return;
+    }
 
-  dictTm = null;
-  wordTm = null;
-  speechWaitTm = null;
+    if (!('speechSynthesis' in window)) {
+      resolve(false);
+      return;
+    }
 
-  if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
-  }
 
-  currentUtterance = null;
+    const u = new SpeechSynthesisUtterance(word);
+    currentUtterance = u;
+
+    u.lang = 'en-US';
+    u.volume = 1;
+    u.pitch = 1;
+    u.rate = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferred =
+      voices.find(v => v.lang === 'en-US') ||
+      voices.find(v => v.lang && v.lang.startsWith('en')) ||
+      voices[0];
+
+    if (preferred) {
+      u.voice = preferred;
+    }
+
+    u.onend = () => {
+      currentUtterance = null;
+      resolve(token === speechToken && isDictating && !paused);
+    };
+
+    u.onerror = () => {
+      currentUtterance = null;
+      resolve(token === speechToken && isDictating && !paused);
+    };
+
+    window.speechSynthesis.speak(u);
+    window.speechSynthesis.resume();
+  });
 }
 function speakWord(word, token) {
   return new Promise(resolve => {
