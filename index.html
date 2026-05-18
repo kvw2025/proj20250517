@@ -344,114 +344,123 @@ const TOPICS=[
 ];
 
 let currentUtterance = null;
+
 let speechToken = 0;
+
 let speechWaitTm = null;
+
 let isDictating = false;
 
 function sleepUntil(targetTime, token) {
+
   return new Promise(resolve => {
+
     const delay = Math.max(0, targetTime - performance.now());
 
     speechWaitTm = setTimeout(() => {
+
       speechWaitTm = null;
+
       resolve(token === speechToken && isDictating && !paused);
+
     }, delay);
+
   });
+
+}
+function stopAllSpeechAndTimers() {
+  isDictating = false;
+  speechToken++;
+
+  clearTimeout(dictTm);
+  clearTimeout(wordTm);
+  clearTimeout(speechWaitTm);
+
+  dictTm = null;
+  wordTm = null;
+  speechWaitTm = null;
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+
+  currentUtterance = null;
 }
 
+
 function speakWord(word, token) {
+
   return new Promise(resolve => {
+
     if (!isDictating || paused || token !== speechToken) {
+
       resolve(false);
+
       return;
+
     }
 
     if (!('speechSynthesis' in window)) {
+
       resolve(false);
+
       return;
+
     }
 
     window.speechSynthesis.cancel();
 
     const u = new SpeechSynthesisUtterance(word);
+
     currentUtterance = u;
 
     u.lang = 'en-US';
+
     u.volume = 1;
+
     u.pitch = 1;
+
     u.rate = 1.0;
 
     const voices = window.speechSynthesis.getVoices();
+
     const preferred =
+
       voices.find(v => v.lang === 'en-US') ||
+
       voices.find(v => v.lang && v.lang.startsWith('en')) ||
+
       voices[0];
 
     if (preferred) {
+
       u.voice = preferred;
+
     }
 
     u.onend = () => {
+
       currentUtterance = null;
+
       resolve(token === speechToken && isDictating && !paused);
+
     };
 
     u.onerror = () => {
+
       currentUtterance = null;
+
       resolve(token === speechToken && isDictating && !paused);
+
     };
 
     window.speechSynthesis.speak(u);
+
     window.speechSynthesis.resume();
+
   });
+
 }
-function speakWord(word, token) {
-  return new Promise(resolve => {
-    if (!isDictating || paused || token !== speechToken) {
-      resolve(false);
-      return;
-    }
-
-    if (!('speechSynthesis' in window)) {
-      resolve(false);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-
-    const u = new SpeechSynthesisUtterance(word);
-    currentUtterance = u;
-
-    u.lang = 'en-US';
-    u.volume = 1;
-    u.pitch = 1;
-    u.rate = 0.85;
-
-    const voices = window.speechSynthesis.getVoices();
-    const preferred =
-      voices.find(v => v.lang === 'en-US') ||
-      voices.find(v => v.lang && v.lang.startsWith('en')) ||
-      voices[0];
-
-    if (preferred) {
-      u.voice = preferred;
-    }
-
-    u.onend = () => {
-      currentUtterance = null;
-      resolve(token === speechToken && isDictating && !paused);
-    };
-
-    u.onerror = () => {
-      currentUtterance = null;
-      resolve(token === speechToken && isDictating && !paused);
-    };
-
-    window.speechSynthesis.speak(u);
-    window.speechSynthesis.resume();
-  });
-}
-
 async function speakWordsAtWritingSpeed(words, msPerWord, token) {
   for (let i = 0; i < words.length; i++) {
     if (!isDictating || paused || token !== speechToken) return false;
@@ -459,7 +468,7 @@ async function speakWordsAtWritingSpeed(words, msPerWord, token) {
     const spoken = await speakWord(words[i], token);
     if (!spoken || !isDictating || paused || token !== speechToken) return false;
 
-    const waited = await waitMs(msPerWord, token);
+    const waited = await sleepUntil(performance.now() + msPerWord, token);
     if (!waited || !isDictating || paused || token !== speechToken) return false;
   }
 
@@ -733,7 +742,7 @@ animWords(words, rt);
 speechToken++;
 const myToken = speechToken;
 
-speakWordsAtWritingSpeed(words.map(w => w.toLowerCase()), msPerWord, myToken).then(done => {
+speakWordsAtWritingSpeed(words, msPerWord, myToken).then(done => {
   if (done && isDictating && !paused && myToken === speechToken) {
     play(i + 1);
   }
