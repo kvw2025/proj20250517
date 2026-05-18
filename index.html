@@ -733,7 +733,7 @@ animWords(words, rt);
 speechToken++;
 const myToken = speechToken;
 
-speakWordsAtWritingSpeed(words, msPerWord, myToken).then(done => {
+speakWordsAtWritingSpeed(words.map(w => w.toLowerCase()), msPerWord, myToken).then(done => {
   if (done && isDictating && !paused && myToken === speechToken) {
     play(i + 1);
   }
