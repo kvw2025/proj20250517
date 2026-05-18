@@ -230,6 +230,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <option value="1000">Review speed · 1s/word</option>
 </select>
         </div>
+        <button class="btn btn-s" id="testVoiceBtn" style="width:100%;margin-top:10px">
+  Test voice
+</button>
+<script>$('testVoiceBtn').addEventListener('click', () => {
+  speakText('Voice test. This is the A two economics dictation app.');
+});</script>
       </div>
 
       <div class="errbox" id="errbox"></div>
